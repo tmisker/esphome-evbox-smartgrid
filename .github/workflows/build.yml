@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    name: ESPHome ${{ matrix.esphome }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Pinned to the version on the Home Assistant box this was written for.
+        esphome: ["2026.8.2"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: platformio-${{ runner.os }}-${{ matrix.esphome }}
+
+      - name: Install ESPHome
+        run: pip install "esphome==${{ matrix.esphome }}"
+
+      - name: Validate example configuration
+        run: |
+          cat > example/secrets.yaml <<'EOF'
+          wifi_ssid: ci
+          wifi_password: ci-password
+          evbox_smartgrid_api_key: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+          evbox_smartgrid_ota_password: ci-password
+          EOF
+          esphome config example/evbox-smartgrid.yaml
+
+      - name: Compile test configuration
+        run: esphome compile tests/test.esp32-s3.yaml

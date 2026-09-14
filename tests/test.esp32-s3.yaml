@@ -1,0 +1,86 @@
+# Compile test used by CI. Exercises every option and entity of the component
+# against the code in this repository.
+esphome:
+  name: evbox-smartgrid-test
+
+esp32:
+  board: m5stack-atoms3
+  variant: esp32s3
+  framework:
+    type: esp-idf
+
+logger:
+  level: VERBOSE
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+uart:
+  id: evbox_bus
+  tx_pin: GPIO6
+  rx_pin: GPIO5
+  baud_rate: 38400
+  flow_control_pin: GPIO7
+
+evbox_smartgrid:
+  id: evbox
+  uart_id: evbox_bus
+  update_interval: 15s
+  timeout: 60s
+  max_current: 16
+  fallback_current: 10
+
+number:
+  - platform: template
+    name: Max charging current
+    optimistic: true
+    min_value: 0
+    max_value: 16
+    step: 1
+    initial_value: 16
+    restore_value: true
+    unit_of_measurement: A
+    on_value:
+      - lambda: id(evbox).set_max_current(x);
+
+switch:
+  - platform: template
+    name: SmartGrid keep-alive
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    turn_on_action:
+      - lambda: id(evbox).set_keepalive_enabled(true);
+    turn_off_action:
+      - lambda: id(evbox).set_keepalive_enabled(false);
+
+sensor:
+  - platform: evbox_smartgrid
+    evbox_smartgrid_id: evbox
+    current_l1:
+      name: Current L1
+    current_l2:
+      name: Current L2
+    current_l3:
+      name: Current L3
+    power_factor_l1:
+      name: Power factor L1
+    power_factor_l2:
+      name: Power factor L2
+    power_factor_l3:
+      name: Power factor L3
+    energy:
+      name: Energy
+    minimum_current:
+      name: Minimum current
+    connection_max_current:
+      name: Connection max current
+    minimum_interval:
+      name: Minimum interval
+
+binary_sensor:
+  - platform: evbox_smartgrid
+    evbox_smartgrid_id: evbox
+    responding:
+      name: ChargePoint responding
