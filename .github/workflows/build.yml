@@ -15,14 +15,14 @@ jobs:
         # Pinned to the version on the Home Assistant box this was written for.
         esphome: ["2026.8.2"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.13"
 
       - name: Cache PlatformIO
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.platformio
           key: platformio-${{ runner.os }}-${{ matrix.esphome }}
